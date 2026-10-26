@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#080b16">
+    <meta name="description" content="Survive the neon arena. Gather energy, upgrade your ship, and see how long you last.">
+    <title>Neon Rift — Arena Survival</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Neon Rift home">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>NEON <strong>RIFT</strong></span>
+        </a>
+        <div class="topbar-note"><span class="status-dot"></span> SECTOR 07 · LIVE</div>
+        <div class="topbar-actions">
+          <button class="account-button" id="account-button" type="button">SIGN IN</button>
+          <button class="leaderboard-button" id="leaderboard-button" type="button" aria-label="Open pilot progress and leaderboard"><span class="ranking-icon" aria-hidden="true">♛</span><span class="ranking-label">RANKINGS</span></button>
+        </div>
+        <button class="icon-button" id="sound-button" type="button" aria-label="Toggle sound" title="Toggle sound">♫</button>
+      </header>
+
+      <section class="account-overlay hidden" id="account-overlay" role="dialog" aria-modal="true" aria-labelledby="account-title">
+        <div class="account-panel">
+          <button class="account-close" id="account-close" type="button" aria-label="Close account panel">×</button>
+          <div class="card-kicker"><span>✦</span> PILOT RECORDS</div>
+          <h2 id="account-title">Your place in the rift</h2>
+          <p class="account-note">Local prototype only: profiles and rankings are not server-secured or shared across devices. Clearing this browser’s site data removes them.</p>
+          <div id="signed-out-view">
+            <div class="account-tabs" role="tablist" aria-label="Account action">
+              <button class="account-tab active" id="signin-tab" type="button" role="tab" aria-selected="true">SIGN IN</button>
+              <button class="account-tab" id="signup-tab" type="button" role="tab" aria-selected="false">CREATE PROFILE</button>
+            </div>
+            <form id="account-form">
+              <label for="username-input">USERNAME</label>
+              <input id="username-input" name="username" type="text" minlength="3" maxlength="16" pattern="[\w\-]{3,16}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Pilot name" required>
+              <small class="field-hint">3–16 characters: letters, numbers, _ or -</small>
+              <label for="password-input">PASSWORD</label>
+              <input id="password-input" name="password" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" required>
+              <p class="form-message" id="account-message" role="status" aria-live="polite"></p>
+              <button class="primary-button" id="account-submit" type="submit">SIGN IN <span>↗</span></button>
+            </form>
+          </div>
+          <div class="signed-in-view hidden" id="signed-in-view">
+            <div class="pilot-greeting"><span class="pilot-avatar">✦</span><div><span class="stat-label">SIGNED IN AS</span><strong id="pilot-name"></strong></div><button id="signout-button" type="button" class="signout-button">SIGN OUT</button></div>
+            <h3>YOUR PROGRESS</h3>
+            <div class="progress-grid">
+              <div class="progress-stat"><span>PERSONAL BEST</span><strong id="progress-best">0</strong></div>
+              <div class="progress-stat"><span>RUNS</span><strong id="progress-runs">0</strong></div>
+              <div class="progress-stat"><span>HOSTILES DOWN</span><strong id="progress-kills">0</strong></div>
+              <div class="progress-stat"><span>BEST SURVIVAL</span><strong id="progress-survival">00:00</strong></div>
+            </div>
+          </div>
+          <div class="leaderboard-section">
+            <div class="leaderboard-heading"><div><h3>LOCAL LEADERBOARD</h3><span>TOP PILOTS ON THIS BROWSER</span></div><span class="leaderboard-trophy">♛</span></div>
+            <ol class="leaderboard-list" id="leaderboard-list"></ol>
+            <p class="leaderboard-empty hidden" id="leaderboard-empty">Play a run to claim your place on the board.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="game-layout" aria-label="Neon Rift game">
+        <aside class="sidebar">
+          <div class="eyebrow">YOUR RUN</div>
+          <div class="stat-card">
+            <span class="stat-label">SCORE</span>
+            <strong id="score-value">000000</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">TIME SURVIVED</span>
+            <strong id="time-value">00:00</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">ELIMINATIONS</span>
+            <strong id="kills-value">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">BEST RUN</span>
+            <strong id="best-value">000000</strong>
+          </div>
+          <div class="tip-card">
+            <span class="tip-icon">⌁</span>
+            <div><strong>Read the incoming fire</strong><p>Dodge the glowing hostile shots. A final boss arrives every 12 eliminations; defeat it to advance to a tougher level.</p></div>
+          </div>
+        </aside>
+
+        <div class="arena-wrap">
+          <div class="arena-heading">
+            <div><span class="eyebrow">COMBAT ZONE</span><h1>The Breach</h1></div>
+            <div class="wave-badge"><span class="wave-pulse"></span><span>LEVEL <b id="wave-value">1</b></span></div>
+          </div>
+          <div class="canvas-frame">
+            <canvas id="game" aria-label="Game arena. Move with WASD or arrow keys to dodge enemies; your blaster automatically fires at the nearest enemy."></canvas>
+            <div class="hud">
+              <div class="health-panel">
+                <div class="hud-label"><span>HULL INTEGRITY</span><span id="health-text">100%</span></div>
+                <div class="bar-track"><div class="bar-fill health-fill" id="health-bar"></div></div>
+              </div>
+              <div class="level-panel">
+                <div class="hud-label"><span>PILOT LVL <b id="level-value">1</b></span><span id="xp-text">0 / 5 XP</span></div>
+                <div class="bar-track"><div class="bar-fill xp-fill" id="xp-bar"></div></div>
+              </div>
+            </div>
+            <div class="boss-health hidden" id="boss-health" aria-live="polite">
+              <div class="boss-health-label"><span>RIFT COMMANDER</span><span id="boss-health-text">100%</span></div>
+              <div class="boss-track"><div class="boss-fill" id="boss-health-bar"></div></div>
+            </div>
+            <div class="game-toast" id="game-toast" role="status" aria-live="polite"></div>
+            <div class="overlay" id="start-overlay">
+              <div class="overlay-card start-card">
+                <div class="card-kicker"><span>✦</span> PILOT, WE NEED YOU</div>
+                <h2>Survive the<br><span>breach.</span></h2>
+                <p>Hostile signals are multiplying. Move fast, collect energy, and hold the line.</p>
+                <button class="primary-button" id="start-button" type="button">ENTER THE ARENA <span>↗</span></button>
+                <div class="controls-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>or</span><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd><span>to move</span></div>
+                <div class="touch-hint">DODGE THE GLOWING SHOTS · BLASTER AUTO-FIRES</div>
+                <div class="auto-fire-note"><span>✦</span> BLASTER AUTO-FIRES AT NEAREST ENEMY</div>
+              </div>
+            </div>
+            <div class="overlay hidden" id="pause-overlay">
+              <div class="overlay-card compact-card">
+                <div class="card-kicker">RUN PAUSED</div><h2>Catch your breath.</h2>
+                <p>Your arena is waiting.</p>
+                <button class="primary-button" id="resume-button" type="button">RESUME RUN <span>↗</span></button>
+                <div class="small-hint">PRESS <kbd>ESC</kbd> TO RESUME</div>
+              </div>
+            </div>
+            <div class="overlay hidden" id="upgrade-overlay">
+              <div class="overlay-card upgrade-card">
+                <div class="card-kicker"><span>✦</span> SIGNAL SURGE · LEVEL UP</div>
+                <h2>Choose an upgrade</h2>
+                <p>Your next move could change everything.</p>
+                <div class="upgrade-options" id="upgrade-options"></div>
+              </div>
+            </div>
+            <div class="overlay hidden" id="gameover-overlay">
+              <div class="overlay-card compact-card">
+                <div class="card-kicker">SIGNAL LOST</div><h2>The rift got you.</h2>
+                <p>You held out for <strong id="final-time">00:00</strong> and took down <strong id="final-kills">0</strong> hostiles.</p>
+                <div class="final-score"><span>FINAL SCORE</span><strong id="final-score">0</strong></div>
+                <button class="primary-button" id="restart-button" type="button">RUN IT BACK <span>↗</span></button>
+                <div class="small-hint">PRESS <kbd>ENTER</kbd> TO PLAY AGAIN</div>
+              </div>
+            </div>
+            <div class="overlay hidden" id="stage-complete-overlay" role="dialog" aria-modal="true" aria-labelledby="stage-complete-title">
+              <div class="overlay-card compact-card">
+                <div class="card-kicker"><span>✦</span> COMMANDER DEFEATED</div>
+                <h2 id="stage-complete-title">LEVEL 1 CLEARED</h2>
+                <p>The rift is quiet... for now. Your next sector is waiting, and its commander will be stronger.</p>
+                <button class="primary-button" id="next-stage-button" type="button">ENTER LEVEL 2 <span>↗</span></button>
+                <div class="small-hint">YOUR UPGRADES CARRY INTO THE NEXT LEVEL</div>
+              </div>
+            </div>
+            <div class="mobile-controls" id="mobile-controls" aria-label="Touch movement controls">
+              <div class="joystick" id="joystick"><div class="joystick-knob" id="joystick-knob"></div></div>
+              <span>MOVE</span>
+              <button class="dash-button" id="dash-button" type="button" aria-label="Dash" disabled><span>↯</span><b>READY</b></button>
+            </div>
+            <button class="arena-pause" id="arena-pause" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button>
+          </div>
+          <footer class="arena-footer">
+            <span><i class="legend-player"></i> YOUR SHIP</span>
+            <span><i class="legend-enemy"></i> HOSTILE</span>
+            <span><i class="legend-xp"></i> ENERGY SHARD</span>
+            <span><i class="legend-heal"></i> REPAIR CELL</span>
+            <span><i class="legend-boss"></i> BOSS / SOLDIERS</span>
+            <button class="pause-button" id="pause-button" type="button"><kbd>ESC</kbd> PAUSE</button>
+          </footer>
+        </div>
+      </section>
+      <div class="page-foot"><span>BUILT FOR THE BRAVE</span><span>NO CHECKPOINTS. NO SECOND CHANCES.</span></div>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
